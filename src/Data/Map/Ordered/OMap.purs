@@ -8,6 +8,8 @@ module Data.Map.Ordered.OMap
   , isEmpty
   , keys
   , lookup
+  , moveLeft
+  , moveRight
   , singleton
   , toUnfoldable
   , unionWith
@@ -17,6 +19,7 @@ import Prelude
 
 import Data.Argonaut.Decode (class DecodeJson)
 import Data.Argonaut.Encode (class EncodeJson)
+import Data.Array ((!!))
 import Data.Array as Array
 import Data.Bifunctor (rmap)
 import Data.Foldable (class Foldable, foldMap)
@@ -152,3 +155,17 @@ alter f k om = case mOldValue, mNewValue of
   mOldValue = lookup k om
 
   mNewValue = f mOldValue
+
+moveLeft :: forall k v. Eq k => k -> OMap k v -> Maybe (OMap k v)
+moveLeft k (OMap arr) = do
+  i <- Array.findIndex (eq k <<< fst) arr
+  _ /\ v <- arr !! i
+  arr' <- Array.deleteAt i arr
+  OMap <$> Array.insertAt (i - 1) (k /\ v) arr'
+
+moveRight :: forall k v. Eq k => k -> OMap k v -> Maybe (OMap k v)
+moveRight k (OMap arr) = do
+  i <- Array.findIndex (eq k <<< fst) arr
+  _ /\ v <- arr !! i
+  arr' <- Array.deleteAt i arr
+  OMap <$> Array.insertAt (i + 1) (k /\ v) arr'
